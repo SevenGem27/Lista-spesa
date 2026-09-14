@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>La Mia Spesa</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Caveat', cursive; background-color: #fdfbf7; margin:0; -webkit-tap-highlight-color: transparent; }
+        .quadretti {
+            background-image: linear-gradient(#999 1px, transparent 1px), linear-gradient(90deg, #999 1px, transparent 1px);
+            background-size: 30px 30px; min-height: 100vh; padding: 20px 10px 80px 10px;
+        }
+        .titolo { font-size: 2.5rem; font-weight: bold; text-align: center; color: #d32f2f; margin-bottom: 20px; }
+        .testo-grande { font-size: 1.8rem; line-height: 30px; }
+        .depennato { text-decoration: line-through; color: #888; }
+        .btn-fluttuante { position: fixed; bottom: 20px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 50; }
+        .btn-sx { left: 20px; background-color: #2196F3; color: white; }
+        .btn-dx { right: 20px; background-color: #4CAF50; color: white; }
+        @media print { .no-print { display: none !important; } .quadretti { background: white; } }
+    </style>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = window.Recharts;
+
+        function App() {
+            const [vista, setVista] = useState('LISTA'); // LISTA, CATALOGO, STORICO
+            const [catalogo, setCatalogo] = useState(() => JSON.parse(localStorage.getItem('spesa_catalogo')) || []);
+            const [lista, setLista] = useState(() => JSON.parse(localStorage.getItem('spesa_lista')) || []);
+            const [storico, setStorico] = useState(() => JSON.parse(localStorage.getItem('spesa_storico')) || []);
+            
+            const [mostraPopupSpesa, setMostraPopupSpesa] = useState(false);
+            const [costoFinale, setCostoFinale] = useState("");
+            const [nuovoNome, setNuovoNome] = useState("");
+            const [nuovaCorsia, setNuovaCorsia] = useState("");
+
+            // Salvataggio automatico
+            useEffect(() => { localStorage.setItem('spesa_catalogo', JSON.stringify(catalogo)); }, [catalogo]);
+            useEffect(() => { localStorage.setItem('spesa_storico', JSON.stringify(storico)); }, [storico]);
+            useEffect(() => {
+                localStorage.setItem('spesa_lista', JSON.stringify(lista));
+                // Controlla se la lista è completata
+                if (lista.length > 0 && lista.every(item => item.depennato) && !mostraPopupSpesa) {
+                    setMostraPopupSpesa(true);
+                }
+            }, [lista]);
+
+            // Funzioni Lista
+            const depennaElemento = (id) => {
+                setLista(lista.map(item => item.id === id ? { ...item, depennato: !item.depennato } : item));
+            };
+
+            const concludiSpesa = () => {
+                const spesa = parseFloat(costoFinale.replace(',', '.'));
+                if (!isNaN(spesa)) {
+                    const nuovaSpesa = { data: new Date().toLocaleDateString('it-IT'), totale: spesa, id: Date.now() };
+                    setStorico([...storico, nuovaSpesa]);
+                    setLista([]); // Pulisci lista
+                    setMostraPopupSpesa(false);
+                    setCostoFinale("");
+                } else { alert("Inserisci un costo valido"); }
+            };
+
+            // Funzioni Catalogo
+            const aggiungiAlCatalogo = () => {
+                if (!nuovoNome.trim()) return;
+                const esistente = catalogo.find(c => c.nome.toLowerCase() === nuovoNome.toLowerCase().trim());
+                if (esistente) {
+                    const azione = window.confirm(`"${nuovoNome}" esiste già in corsia ${esistente.corsia}. Vuoi aggiornare la corsia a ${nuovaCorsia}? (Ok = Aggiorna, Annulla = Ignora)`);
+                    if (azione) {
+                        setCatalogo(catalogo.map(c => c.id === esistente.id ? { ...c, corsia: nuovaCorsia || c.corsia } : c));
+                    }
+                } else {
+                    const nuovoElemento = { id: Date.now(), nome: nuovoNome.trim(), corsia: nuovaCorsia || "N/D" };
+                    setCatalogo([...catalogo, nuovoElemento]);
+                }
+                setNuovoNome(""); setNuovaCorsia("");
+            };
+
+            const aggiungiInLista = (prodotto) => {
+                if (!lista.find(l => l.id === prodotto.id)) {
+                    const listaAggiornata = [...lista, { ...prodotto, depennato: false }];
+                    listaAggiornata.sort((a, b) => a.corsia.toString().localeCompare(b.corsia.toString()));
+                    setLista(listaAggiornata);
+                }
+            };
+
+            const eliminaDalCatalogo = (id) => {
+                if(window.confirm("Sei sicuro di voler eliminare questo prodotto dal catalogo?")) {
+                    setCatalogo(catalogo.filter(c => c.id !== id));
+                    setLista(lista.filter(l => l.id !== id));
+                }
+            };
+
+            // VISTE
+            if (vista === 'STORICO') {
+                const datiGrafico = storico.map(s => ({ name: s.data, spesa: s.totale }));
+                return (
+                    <div className="p-4 bg-white min-h-screen font-sans">
+                        <div className="no-print">
+                            <button onClick={() => setVista('LISTA')} className="mb-4 bg-gray-200 p-2 rounded">🔙 Torna alla Lista</button>
+                            <button onClick={() => window.print()} className="mb-4 ml-2 bg-blue-500 text-white p-2 rounded">📄 Salva in PDF</button>
+                        </div>
+                        <h2 className="text-2xl font-bold mb-4">Storico Spese</h2>
+                        <div className="w-full h-64 bg-gray-50 mb-6">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={datiGrafico} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                    <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Line type="monotone" dataKey="spesa" stroke="#d32f2f" strokeWidth={3} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <ul className="border-t pt-4">
+                            {storico.slice().reverse().map(s => (
+                                <li key={s.id} className="flex justify-between py-2 border-b">
+                                    <span>{s.data}</span>
+                                    <span className="font-bold">€ {s.totale.toFixed(2)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            }
+
+            if (vista === 'CATALOGO') {
+                return (
+                    <div className="p-4 min-h-screen bg-yellow-50">
+                        <button onClick={() => setVista('LISTA')} className="mb-4 bg-gray-200 p-2 rounded text-xl">🔙 Indietro</button>
+                        <h2 className="text-2xl font-bold mb-4">Aggiungi Prodotti</h2>
+                        <div className="flex flex-col gap-2 mb-6 bg-white p-4 rounded shadow">
+                            <input value={nuovoNome} onChange={e => setNuovoNome(e.target.value)} placeholder="Nome prodotto..." className="border p-2 text-xl" />
+                            <input value={nuovaCorsia} onChange={e => setNuovaCorsia(e.target.value)} placeholder="Numero corsia (opzionale)" type="number" className="border p-2 text-xl" />
+                            <button onClick={aggiungiAlCatalogo} className="bg-green-500 text-white p-2 rounded text-xl">Salva nel Catalogo</button>
+                        </div>
+                        <h3 className="text-xl font-bold mb-2 border-b border-gray-400">Il tuo Catalogo:</h3>
+                        <ul>
+                            {catalogo.sort((a,b)=>a.corsia.toString().localeCompare(b.corsia.toString())).map(prod => (
+                                <li key={prod.id} className="flex justify-between items-center py-3 border-b border-gray-300 text-xl">
+                                    <div className="flex flex-col" onClick={() => aggiungiInLista(prod)}>
+                                        <span>{prod.nome} <span className="text-sm text-gray-500">(Corsia: {prod.corsia})</span></span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => aggiungiInLista(prod)} className="bg-blue-100 text-blue-800 px-3 py-1 rounded">➕ In lista</button>
+                                        <button onClick={() => eliminaDalCatalogo(prod.id)} className="bg-red-100 text-red-800 px-3 py-1 rounded">🗑</button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            }
+
+            // VISTA PRINCIPALE (Lista a quadretti)
+            return (
+                <div className="quadretti">
+                    <div className="titolo no-print">Lista della Spesa</div>
+                    
+                    {lista.length === 0 ? (
+                        <p className="text-center text-gray-500 testo-grande mt-10">La lista è vuota.<br/>Premi la matita per aggiungere prodotti!</p>
+                    ) : (
+                        <ul className="ml-4">
+                            {lista.map(item => (
+                                <li key={item.id} onClick={() => depennaElemento(item.id)} className={`testo-grande flex items-center gap-2 cursor-pointer ${item.depennato ? 'depennato' : ''}`}>
+                                    <span>{item.depennato ? '✅' : '➖'}</span>
+                                    {item.nome} <span className="text-gray-400 text-sm ml-2">C{item.corsia}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {/* Popup Fine Spesa */}
+                    {mostraPopupSpesa && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-6 rounded shadow-xl text-center font-sans w-full max-w-sm">
+                                <h3 className="text-2xl font-bold mb-4">Spesa Completata! 🎉</h3>
+                                <p className="mb-4">Quanto hai speso in totale?</p>
+                                <input type="number" step="0.01" value={costoFinale} onChange={e => setCostoFinale(e.target.value)} placeholder="Es. 45.50" className="border-2 border-gray-300 p-2 text-xl w-full text-center mb-4 rounded" />
+                                <div className="flex gap-4">
+                                    <button onClick={() => setMostraPopupSpesa(false)} className="flex-1 bg-gray-300 p-2 rounded">Annulla</button>
+                                    <button onClick={concludiSpesa} className="flex-1 bg-green-500 text-white p-2 rounded font-bold">Salva e Pulisci</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pulsanti Fluttuanti */}
+                    <div className="no-print">
+                        <button onClick={() => setVista('STORICO')} className="btn-fluttuante btn-sx">📊</button>
+                        <button onClick={() => setVista('CATALOGO')} className="btn-fluttuante btn-dx">✏️</button>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('Errore SW', err));
+            });
+        }
+    </script>
+</body>
+</html>
