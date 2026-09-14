@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>La Mia Spesa</title>
+
+    <!-- Specifiche Apple iOS per PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Spesa">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Icona per iOS in Base64 -->
+    <!-- Sostituisci solo TUO_CODICE_BASE64_QUI mantenendo data:image/png;base64, -->
+    <link rel="apple-touch-icon" href="data:image/png;base64,TUO_CODICE_BASE64_QUI">
+
+    <!-- Collegamento Manifest e Fogli di Stile -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Libreria Grafico per lo Storico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- SCHERMATA 1: LISTA DELLA SPESA PRINCIPALE -->
+    <main id="vista-lista" class="schermata">
+        <header class="intestazione no-print">
+            <h1 class="titolo">Lista della Spesa</h1>
+        </header>
+
+        <div id="messaggio-vuoto" class="messaggio" style="display: none;">
+            La lista è vuota.<br>Tocca la matita per aggiungere prodotti!
+        </div>
+
+        <ul id="lista-spesa" class="elenco-prodotti"></ul>
+
+        <!-- Tasti Fluttuanti di Navigazione -->
+        <nav class="comandi-rapidi no-print" aria-label="Comandi rapidi">
+            <button id="btn-storico" class="btn-fluttuante btn-sx" aria-label="Visualizza Storico">📊</button>
+            <button id="btn-catalogo" class="btn-fluttuante btn-dx" aria-label="Apri Catalogo e Aggiungi">✏️</button>
+        </nav>
+    </main>
+
+    <!-- SCHERMATA 2: CATALOGO PRODOTTI -->
+    <section id="vista-catalogo" class="schermata" style="display: none;">
+        <header class="no-print intestazione-sezione">
+            <button class="btn-indietro" onclick="cambiaVista('vista-lista')">🔙 Indietro</button>
+            <h2>Catalogo Prodotti</h2>
+        </header>
+
+        <div class="pannello-inserimento">
+            <input type="text" id="input-nome" placeholder="Nome prodotto..." autocomplete="off">
+            <input type="number" id="input-corsia" placeholder="Numero corsia (es. 3)" inputmode="numeric">
+            <button id="btn-salva-catalogo" class="btn-primario">Salva nel Catalogo</button>
+        </div>
+
+        <ul id="lista-catalogo" class="elenco-prodotti"></ul>
+    </section>
+
+    <!-- SCHERMATA 3: STORICO E GRAFICO -->
+    <section id="vista-storico" class="schermata" style="display: none;">
+        <header class="no-print intestazione-sezione">
+            <button class="btn-indietro" onclick="cambiaVista('vista-lista')">🔙 Indietro</button>
+            <button id="btn-stampa" class="btn-stampa">📄 Salva in PDF</button>
+        </header>
+
+        <h2>Storico Spese</h2>
+
+        <div class="contenitore-grafico">
+            <canvas id="grafico-spese"></canvas>
+        </div>
+
+        <ul id="lista-storico" class="elenco-storico"></ul>
+    </section>
+
+    <!-- MODALE DI CONFERMA: FINE SPESA -->
+    <div id="popup-spesa" class="popup" style="display: none;" role="dialog" aria-modal="true">
+        <div class="popup-box">
+            <h3>Spesa Completata! 🎉</h3>
+            <p>Quanto hai speso in totale?</p>
+            <input type="number" id="input-costo" step="0.01" placeholder="Es. 45.50" inputmode="decimal">
+            <div class="popup-bottoni">
+                <button id="btn-annulla-popup" class="btn-grigio">Annulla</button>
+                <button id="btn-conferma-popup" class="btn-verde">Salva e Pulisci</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Applicativo e Service Worker -->
+    <script type="module" src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.error('Service Worker non registrato:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
