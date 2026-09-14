@@ -162,21 +162,20 @@ document.getElementById('btn-annulla-popup').addEventListener('click', () => {
 });
 
 document.getElementById('btn-conferma-popup').addEventListener('click', async () => {
-    const costo = parseFloat(document.getElementById('input-costo').value.replace(',', '.'));
-    if (isNaN(costo) || costo <= 0) {
-        alert("Inserisci un costo valido");
-        return;
+    const valoreInput = document.getElementById('input-costo').value.trim();
+    const costo = parseFloat(valoreInput.replace(',', '.'));
+
+    // Salva nello storico SOLO se l'utente ha inserito un numero valido
+    if (valoreInput !== "" && !isNaN(costo) && costo > 0) {
+        const dataOdierna = new Date().toLocaleDateString('it-IT');
+        await addDoc(collection(db, "storico"), {
+            data: dataOdierna,
+            totale: costo,
+            timestamp: Date.now()
+        });
     }
 
-    // Salva nello storico
-    const dataOdierna = new Date().toLocaleDateString('it-IT');
-    await addDoc(collection(db, "storico"), {
-        data: dataOdierna,
-        totale: costo,
-        timestamp: Date.now()
-    });
-
-    // Pulisci la lista (elimina tutti i documenti nella collection "lista")
+    // A prescindere dall'importo, pulisci la lista
     for (const item of listaAttiva) {
         await deleteDoc(doc(db, "lista", item.id));
     }
@@ -227,7 +226,24 @@ function aggiornaGrafico() {
     });
 }
 
-// Stampa
+// Stampa PDF (Adattato per iOS PWA)
 document.getElementById('btn-stampa').addEventListener('click', () => {
-    window.print();
+    const elementoDaStampare = document.getElementById('vista-storico');
+    const bottoni = elementoDaStampare.querySelector('.intestazione-sezione');
+    
+    // Nascondiamo temporaneamente i bottoni "Indietro" e "PDF" per non stamparli nel foglio
+    bottoni.style.display = 'none';
+
+    const opzioni = {
+        margin:       10,
+        filename:     'storico_spesa.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 }, // Aumenta la risoluzione
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opzioni).from(elementoDaStampare).save().then(() => {
+        // Facciamo riapparire i bottoni a schermo dopo aver salvato
+        bottoni.style.display = 'flex';
+    });
 });
