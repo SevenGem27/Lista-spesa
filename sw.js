@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spesa-pwa-v2';
+const CACHE_NAME = 'spesa-pwa-v3';
 const urlsToCache = [
   './index.html',
   './style.css',
