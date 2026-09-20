@@ -1,23 +1,17 @@
 * { box-sizing: border-box; }
 
 body {
-    font-family: 'Caveat', cursive; /* Effetto scrittura a mano */
+    font-family: 'Caveat', cursive;
     background-color: #fdfbf7;
     margin: 0; padding: 0;
     -webkit-tap-highlight-color: transparent;
     color: #333;
 }
 
-/* 
-   Sfondo a quadretti e Gestione Aree Sicure iPhone (Safe Areas).
-   Usiamo calc() per sommare il nostro margine ideale allo spazio fisico dell'iPhone 
-*/
 .schermata {
     background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px);
     background-size: 30px 30px;
     min-height: 100vh;
-    
-    /* Padding dinamico per iPhone */
     padding-top: calc(20px + env(safe-area-inset-top));
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
     padding-left: calc(15px + env(safe-area-inset-left));
@@ -27,71 +21,47 @@ body {
 #vista-catalogo { background: #fffde7; }
 #vista-storico { background: #ffffff; }
 
-.titolo, h2 {
-    font-size: 2.8rem;
-    text-align: center;
-    color: #d32f2f;
-    margin: 0 0 20px 0;
-}
-
+.titolo, h2 { font-size: 2.8rem; text-align: center; color: #d32f2f; margin: 0 0 20px 0; }
 .messaggio { text-align: center; font-size: 1.8rem; color: #888; margin-top: 40px; }
 
 ul { list-style: none; padding: 0; margin: 0; }
 li { font-size: 2rem; padding: 10px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #ccc; }
 .elemento-depennato { text-decoration: line-through; color: #aaa; }
 
-/* 
-   Tasti fluttuanti (Matita e Grafico)
-   Sollevati dalla Home Indicator (la barra nera/bianca in basso su iPhone)
-*/
 .btn-fluttuante {
     position: fixed; 
-    /* Si alza automaticamente se c'è la barra home dell'iPhone */
     bottom: calc(25px + env(safe-area-inset-bottom));
     width: 65px; height: 65px;
-    border-radius: 50%;
-    border: none;
-    font-size: 30px;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    z-index: 100;
+    border-radius: 50%; border: none; font-size: 30px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
 }
 
-/* Si spostano in caso di rotazione orizzontale dello schermo */
-.btn-sx { 
-    left: calc(20px + env(safe-area-inset-left)); 
-    background-color: #2196F3; color: white; 
-}
-.btn-dx { 
-    right: calc(20px + env(safe-area-inset-right)); 
-    background-color: #4CAF50; color: white; 
+.btn-sx { left: calc(20px + env(safe-area-inset-left)); background-color: #2196F3; color: white; }
+.btn-dx { right: calc(20px + env(safe-area-inset-right)); background-color: #4CAF50; color: white; }
+
+/* Stile per il nuovo tasto centrale */
+.btn-centro {
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ff9800;
+    color: white;
 }
 
-/* Inserimento catalogo */
-.pannello-inserimento {
-    background: white; padding: 15px; border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
-}
-input {
-    width: 100%; font-size: 1.5rem; padding: 10px; margin-bottom: 10px;
-    border: 1px solid #ccc; border-radius: 5px; font-family: inherit;
-}
-#btn-salva-catalogo { width: 100%; background: #4CAF50; color: white; font-size: 1.5rem; padding: 10px; border: none; border-radius: 5px; font-family: inherit; }
+.pannello-inserimento { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+input { width: 100%; font-size: 1.5rem; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; }
 
-/* Pulsanti lista catalogo */
 .btn-aggiungi { background: #e3f2fd; color: #1565c0; border: none; padding: 5px 15px; border-radius: 5px; font-size: 1.2rem; margin-right: 5px; }
 .btn-elimina { background: #ffebee; color: #c62828; border: none; padding: 5px 15px; border-radius: 5px; font-size: 1.2rem; }
 
-/* Storico e Grafico */
 .intestazione-storico, .intestazione-sezione { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .btn-indietro, .btn-stampa { font-size: 1.5rem; border: none; padding: 8px 15px; border-radius: 5px; font-family: inherit; }
 .btn-indietro { background: #e0e0e0; }
 .btn-stampa { background: #2196F3; color: white; }
 .contenitore-grafico { width: 100%; height: 250px; margin-bottom: 20px; }
 
-/* Popup Spesa */
 .popup {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .popup-box { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
@@ -100,8 +70,4 @@ input {
 .btn-grigio { background: #e0e0e0; }
 .btn-verde { background: #4CAF50; color: white; }
 
-/* Stampa PDF */
-@media print {
-    .no-print { display: none !important; }
-    .schermata { background: white !important; padding: 0 !important; }
-}
+@media print { .no-print { display: none !important; } .schermata { background: white !important; padding: 0 !important; } }
