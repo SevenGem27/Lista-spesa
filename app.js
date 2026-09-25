@@ -55,15 +55,23 @@ const dizionarioCorsie = [
     { corsia: 19, parole: ["patatin", "acqua", "minerale", "naturale", "frizzante", "pane", "grissin", "zuccher", "dolcificant", "bibit", "coca cola", "aranciata", "crackers"] }
 ];
 
-document.getElementById('input-nome').addEventListener('input', (e) => {
-    const testo = e.target.value.toLowerCase();
-    const campoCorsia = document.getElementById('input-corsia');
-    if (testo.length < 3) return;
+// Funzione isolata per trovare la corsia
+function suggerisciCorsia(testo) {
+    testo = testo.toLowerCase();
+    if (testo.length < 3) return null;
     for (const categoria of dizionarioCorsie) {
         if (categoria.parole.some(parola => testo.includes(parola))) {
-            campoCorsia.value = categoria.corsia;
-            break; 
+            return categoria.corsia;
         }
+    }
+    return null;
+}
+
+// Quando scrivi un nuovo prodotto
+document.getElementById('input-nome').addEventListener('input', (e) => {
+    const corsiaIntelligente = suggerisciCorsia(e.target.value);
+    if (corsiaIntelligente !== null) {
+        document.getElementById('input-corsia').value = corsiaIntelligente;
     }
 });
 // ============================================================
@@ -124,14 +132,11 @@ document.getElementById('btn-salva-catalogo').addEventListener('click', async ()
     const corsia = document.getElementById('input-corsia').value || 99;
     if(!nome) return;
     
-    // Controlla se il prodotto esiste (ignora maiuscole/minuscole)
     const esistente = catalogo.find(c => c.nome.toLowerCase() === nome.toLowerCase());
     
     if (esistente) {
         if(confirm(`"${nome}" esiste già. Vuoi aggiornare la sua corsia a ${corsia}?`)) {
-            // Aggiorna catalogo
             await updateDoc(doc(db, "catalogo", esistente.id), { corsia: Number(corsia) });
-            // Aggiorna lista in tempo reale se presente
             const prodottoInLista = listaAttiva.find(l => l.nome.toLowerCase() === nome.toLowerCase());
             if(prodottoInLista) {
                 await updateDoc(doc(db, "lista", prodottoInLista.id), { corsia: Number(corsia) });
@@ -163,12 +168,18 @@ function renderCatalogo() {
     });
 }
 
-// Nuova funzione per preparare la modifica
+// Quando clicchi la matita su un prodotto esistente
 window.preparaModifica = function(id) {
     const prodotto = catalogo.find(c => c.id === id);
     document.getElementById('input-nome').value = prodotto.nome;
-    document.getElementById('input-corsia').value = prodotto.corsia;
-    document.getElementById('input-corsia').focus(); // Posiziona il cursore sul numero!
+    
+    // Controlla se l'Intelligenza Artificiale conosce la corsia giusta
+    const corsiaIntelligente = suggerisciCorsia(prodotto.nome);
+    
+    // Se la conosce, inserisce quella corretta. Altrimenti lascia quella vecchia.
+    document.getElementById('input-corsia').value = corsiaIntelligente !== null ? corsiaIntelligente : prodotto.corsia;
+    
+    document.getElementById('input-corsia').focus(); 
     window.scrollTo(0,0);
 };
 
@@ -176,9 +187,12 @@ window.aggiungiInLista = async function(idCatalogo) {
     const prodotto = catalogo.find(c => c.id === idCatalogo);
     if(!listaAttiva.find(l => l.nome === prodotto.nome)) {
         await addDoc(collection(db, "lista"), { nome: prodotto.nome, corsia: prodotto.corsia, depennato: false });
-        alert(`${prodotto.nome} aggiunto alla lista!`);
-    } else { alert("Prodotto già presente in lista!"); }
+        // Nessun fastidioso alert, l'aggiunta è fluida!
+    } else { 
+        alert("Prodotto già presente in lista!"); 
+    }
 };
+
 window.eliminaDaCatalogo = async function(id) {
     if(confirm("Sicuro di voler eliminare questo prodotto dal catalogo?")) {
         await deleteDoc(doc(db, "catalogo", id));
