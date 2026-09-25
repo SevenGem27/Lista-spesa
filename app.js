@@ -143,12 +143,23 @@ document.getElementById('btn-salva-catalogo').addEventListener('click', async ()
     const nome = document.getElementById('input-nome').value.trim();
     const corsia = document.getElementById('input-corsia').value || 99;
     if(!nome) return;
+    
     const esistente = catalogo.find(c => c.nome.toLowerCase() === nome.toLowerCase());
     if (esistente) {
         if(confirm(`"${nome}" esiste già. Vuoi aggiornare la sua corsia a ${corsia}?`)) {
+            // 1. Aggiorna il Catalogo
             await updateDoc(doc(db, "catalogo", esistente.id), { corsia: Number(corsia) });
+            
+            // 2. NOVITÀ: Cerca se c'è già in lista e aggiorna anche quello in tempo reale!
+            const prodottoInLista = listaAttiva.find(l => l.nome.toLowerCase() === nome.toLowerCase());
+            if(prodottoInLista) {
+                await updateDoc(doc(db, "lista", prodottoInLista.id), { corsia: Number(corsia) });
+            }
         }
-    } else { await addDoc(collection(db, "catalogo"), { nome, corsia: Number(corsia) }); }
+    } else { 
+        await addDoc(collection(db, "catalogo"), { nome, corsia: Number(corsia) }); 
+    }
+    
     document.getElementById('input-nome').value = '';
     document.getElementById('input-corsia').value = '';
 });
