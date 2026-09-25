@@ -97,6 +97,47 @@ function controllaCompletamento() {
     }
 }
 
+// ================= AUTO-COMPLETAMENTO CORSIE =================
+
+const dizionarioCorsie = [
+    { corsia: 1, parole: ["frutta", "verdura", "insalat", "mela", "mele", "zucchine", "pomodor", "secca", "noci", "mandorle", "cereali", "legumi", "farro", "cous", "lenticchie", "piselli", "fagioli", "ceci"] },
+    { corsia: 2, parole: ["formaggi", "mozzarella", "grana", "parmigiano", "ricotta", "latticin", "uova", "latte", "yogurt", "affettat", "prosciutt", "salame", "speck", "mortadella", "bresaola", "pasta fresca", "ravioli", "trofie", "gnocchi", "strozzapreti", "burro"] },
+    { corsia: 3, parole: ["scatola", "sale", "sottacet", "sottoli", "olive", "salse", "maionese", "ketchup", "senape", "carne", "pesce", "tonno", "sgombro", "riso"] },
+    { corsia: 4, parole: ["farina", "marmellat", "miele", "preparat", "lievito", "pizz", "fette biscottate", "budin", "torta", "torte"] },
+    { corsia: 5, parole: ["dietetic", "pasta all'uovo", "passata", "pomodoro", "sugo", "pastin", "deodorant", "semola", "spaghetti", "maccheroni", "penne"] },
+    { corsia: 6, parole: ["tovagli", "tappet", "casa", "tessile", "spugn"] },
+    { corsia: 7, parole: ["cereali", "biscott", "frollini", "pan di stelle", "primo prezzo", "biologic", "tè"] },
+    { corsia: 8, parole: ["giocattol", "sciroppata", "party", "festa", "pic-nic", "forno", "alluminio", "infanzia"] },
+    { corsia: 9, parole: ["neonat", "fazzolettin", "pannolin", "intimo bambin", "ciabatt", "pantofol"] },
+    { corsia: 10, parole: ["calze donn", "igiene oral", "dentifricio", "spazzolino", "collutorio", "calzature", "scarpe", "assorbent", "bigiotteri"] },
+    { corsia: 11, parole: ["intimo donn", "mutande", "reggisen", "profum", "carta igienica", "biancheria"] },
+    { corsia: 12, parole: ["barba", "schiuma", "rasoi", "igiene personale", "bagnoschiuma", "shampoo", "docciaschiuma", "sapone", "intimo uom", "calze uom"] },
+    { corsia: 13, parole: ["sanitar", "cancelleria", "penne", "quadern", "fai da te", "auto", "carta casa", "scottex", "uffici"] },
+    { corsia: 14, parole: ["detersiv", "lavatrice", "piatt", "ammorbident", "pulizia", "cere", "smacchiator", "candeggina", "acqua distillata", "bucato"] },
+    { corsia: 15, parole: ["aperitiv", "crodino", "campari", "analcolic", "vini tipici", "marsala", "succh", "liquor", "amaro", "spumant", "champagne", "pile"] },
+    { corsia: 16, parole: ["vini", "vino", "birr"] },
+    { corsia: 17, parole: ["panni", "animal", "cane", "gatto", "croccant", "scatolette", "lampadin", "lucid"] },
+    { corsia: 18, parole: ["gelat", "surgelat", "pizza", "salatin", "sofficini", "bastoncini", "piatti pronti"] },
+    { corsia: 19, parole: ["patatin", "acqua", "minerale", "naturale", "frizzante", "pane", "grissin", "zuccher", "dolcificant", "bibit", "coca cola", "aranciata", "crackers"] }
+];
+
+// Ascolta cosa scrivi e assegna la corsia
+document.getElementById('input-nome').addEventListener('input', (e) => {
+    const testo = e.target.value.toLowerCase();
+    const campoCorsia = document.getElementById('input-corsia');
+    
+    // Inizia a cercare solo se hai scritto almeno 3 lettere
+    if (testo.length < 3) return;
+
+    for (const categoria of dizionarioCorsie) {
+        // Se una delle parole chiave della categoria è contenuta in ciò che hai scritto
+        if (categoria.parole.some(parola => testo.includes(parola))) {
+            campoCorsia.value = categoria.corsia;
+            break; // Ferma la ricerca appena trova la corrispondenza
+        }
+    }
+});
+
 // CATALOGO
 document.getElementById('btn-salva-catalogo').addEventListener('click', async () => {
     const nome = document.getElementById('input-nome').value.trim();
